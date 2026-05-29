@@ -21,30 +21,27 @@ export const useAuthStore = defineStore("auth", {
   actions: {
     async login(email: string, contrasena: string) {
       const config = useRuntimeConfig()
-      const { data, error } = await useFetch<{ access_token: string }>(
+      const data = await $fetch<{ access_token: string }>(
         `${config.public.apiBase}/api/v1/auth/login`,
         {
           method: "POST",
           body: { email, contrasena },
         }
       )
-      if (error.value || !data.value) {
-        throw new Error("Credenciales incorrectas")
-      }
-      this.token = data.value.access_token
+      this.token = data.access_token
       await this.cargarUsuario()
     },
 
     async cargarUsuario() {
       if (!this.token) return
       const config = useRuntimeConfig()
-      const { data } = await useFetch<UsuarioActual>(
+      const data = await $fetch<UsuarioActual>(
         `${config.public.apiBase}/api/v1/auth/me`,
         {
           headers: { Authorization: `Bearer ${this.token}` },
         }
       )
-      if (data.value) this.usuario = data.value
+      this.usuario = data
     },
 
     cerrarSesion() {
@@ -53,6 +50,4 @@ export const useAuthStore = defineStore("auth", {
       navigateTo("/login")
     },
   },
-
-  persist: true,
 })
