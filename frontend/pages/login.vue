@@ -127,6 +127,28 @@
           <UiButton type="submit" :loading="cargando" size="lg" class="w-full mt-2">
             Ingresar
           </UiButton>
+
+          <div class="relative my-1">
+            <div class="absolute inset-0 flex items-center">
+              <div class="w-full border-t border-slate-100" />
+            </div>
+            <div class="relative flex justify-center">
+              <span class="bg-white px-3 text-xs text-slate-400">o</span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            :disabled="cargandoInvitado"
+            @click="entrarComoInvitado"
+            class="w-full flex items-center justify-center gap-2 py-2.5 text-sm text-slate-500 hover:text-slate-700 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors disabled:opacity-50"
+          >
+            <span v-if="cargandoInvitado" class="w-3.5 h-3.5 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
+            <svg v-else class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            Ver como invitado (solo lectura)
+          </button>
         </form>
       </div>
     </div>
@@ -140,6 +162,7 @@ const email = ref("")
 const contrasena = ref("")
 const error = ref("")
 const cargando = ref(false)
+const cargandoInvitado = ref(false)
 const mostrarPass = ref(false)
 
 const features = ["Liquidacion automatica", "Exportacion PDF", "Historial de periodos", "PWA offline"]
@@ -154,6 +177,18 @@ async function iniciarSesion() {
     error.value = "Email o contrasena incorrectos"
   } finally {
     cargando.value = false
+  }
+}
+
+async function entrarComoInvitado() {
+  cargandoInvitado.value = true
+  try {
+    await auth.entrarComoInvitado()
+    await navigateTo("/admin/periodos")
+  } catch {
+    error.value = "No se pudo iniciar como invitado"
+  } finally {
+    cargandoInvitado.value = false
   }
 }
 </script>

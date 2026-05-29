@@ -47,3 +47,15 @@ async def login(
 @router.get("/me", response_model=UsuarioActual)
 def me(usuario: UsuarioActual = Depends(obtener_usuario_actual)) -> UsuarioActual:
     return usuario
+
+
+@router.post("/invitado", response_model=TokenRespuesta)
+def acceso_invitado() -> TokenRespuesta:
+    """Genera un token de solo lectura sin necesidad de credenciales."""
+    token = crear_token_acceso({
+        "sub": "invitado",
+        "email": "invitado@consorcio.local",
+        "rol": "invitado",
+        "nombre_completo": "Invitado",
+    })
+    return TokenRespuesta(access_token=token)

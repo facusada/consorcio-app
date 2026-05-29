@@ -7,7 +7,7 @@
         <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Periodos</h1>
         <p class="text-slate-500 text-sm mt-1">Gestion mensual de gastos y liquidaciones</p>
       </div>
-      <UiButton @click="abrirModal = true">
+      <UiButton v-if="auth.puedeModificar" @click="abrirModal = true">
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
         </svg>
@@ -144,6 +144,7 @@ interface Periodo {
   id: string; mes: number; anio: number; estado: string; etiqueta: string; fecha_cierre: string | null
 }
 
+const auth = useAuthStore()
 const api = useApi()
 const periodos = ref<Periodo[]>([])
 const cargando = ref(true)

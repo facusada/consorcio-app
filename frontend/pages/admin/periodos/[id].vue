@@ -30,20 +30,22 @@
         <!-- Acciones -->
         <div class="flex gap-2">
           <template v-if="periodo.estado === 'liquidado'">
-            <UiButton variant="secondary" size="sm" :loading="accionando" @click="cambiarEstado('abierto')">
-              Reabrir
-            </UiButton>
+            <template v-if="auth.puedeModificar">
+              <UiButton variant="secondary" size="sm" :loading="accionando" @click="cambiarEstado('abierto')">
+                Reabrir
+              </UiButton>
+            </template>
             <UiButton variant="secondary" size="sm" @click="descargarPdf">
               <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
               </svg>
               PDF
             </UiButton>
-            <UiButton size="sm" :loading="accionando" @click="cambiarEstado('cerrado')">
+            <UiButton v-if="auth.puedeModificar" size="sm" :loading="accionando" @click="cambiarEstado('cerrado')">
               Cerrar periodo
             </UiButton>
           </template>
-          <template v-else-if="periodo.estado === 'abierto'">
+          <template v-else-if="periodo.estado === 'abierto' && auth.puedeModificar">
             <UiButton size="sm" :loading="liquidando" @click="liquidar">
               <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -109,7 +111,7 @@
             <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
               <h2 class="text-sm font-semibold text-slate-900">Gastos del periodo</h2>
               <UiButton
-                v-if="periodo.estado === 'abierto'"
+                v-if="periodo.estado === 'abierto' && auth.puedeModificar"
                 variant="ghost"
                 size="sm"
                 @click="abrirModalGasto = true"
@@ -140,7 +142,7 @@
                 <div class="flex items-center gap-2 shrink-0">
                   <span class="text-sm font-semibold tabular text-slate-800">{{ formatMonto(gasto.monto) }}</span>
                   <button
-                    v-if="periodo.estado === 'abierto'"
+                    v-if="periodo.estado === 'abierto' && auth.puedeModificar"
                     @click="eliminarGasto(gasto.id)"
                     class="opacity-0 group-hover:opacity-100 w-6 h-6 flex items-center justify-center rounded-lg text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all"
                   >
@@ -327,6 +329,7 @@ interface Liquidacion {
 const route = useRoute()
 const config = useRuntimeConfig()
 const auth = useAuthStore()
+
 const api = useApi()
 
 const cargando = ref(true)
