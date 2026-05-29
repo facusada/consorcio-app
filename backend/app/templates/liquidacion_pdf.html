@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Liquidacion {{ periodo }}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, Helvetica, sans-serif; font-size: 11px; color: #222; padding: 24px; }
+
+    .encabezado { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #1e40af; padding-bottom: 12px; }
+    .encabezado h1 { font-size: 18px; color: #1e40af; font-weight: bold; }
+    .encabezado h2 { font-size: 14px; color: #374151; margin-top: 4px; }
+    .encabezado .meta { color: #6b7280; font-size: 10px; margin-top: 6px; }
+
+    .seccion { margin-bottom: 18px; }
+    .seccion-titulo {
+      background: #1e40af; color: white; padding: 5px 10px;
+      font-size: 11px; font-weight: bold; margin-bottom: 0;
+    }
+
+    table { width: 100%; border-collapse: collapse; }
+    th {
+      background: #dbeafe; color: #1e3a8a; font-size: 10px;
+      padding: 5px 8px; text-align: left; border-bottom: 1px solid #93c5fd;
+    }
+    th.der, td.der { text-align: right; }
+    td { padding: 5px 8px; border-bottom: 1px solid #e5e7eb; font-size: 10.5px; }
+    tr:last-child td { border-bottom: none; }
+    tr.subtotal td { font-weight: bold; background: #f0f9ff; border-top: 1px solid #93c5fd; }
+    tr.total-final td { font-weight: bold; background: #1e40af; color: white; font-size: 11px; }
+
+    .badge-ordinario { color: #065f46; }
+    .badge-extraordinario { color: #92400e; }
+    .deuda { color: #b91c1c; font-weight: 600; }
+
+    .pie { margin-top: 24px; border-top: 1px solid #d1d5db; padding-top: 10px;
+           color: #9ca3af; font-size: 9px; text-align: right; }
+  </style>
+</head>
+<body>
+
+  <div class="encabezado">
+    <h1>{{ consorcio_nombre }}</h1>
+    <h2>Liquidacion de Expensas &mdash; {{ periodo }}</h2>
+    <p class="meta">{{ consorcio_direccion }} &bull; Generado el {{ fecha_generacion }}</p>
+  </div>
+
+  <!-- Gastos del periodo -->
+  <div class="seccion">
+    <div class="seccion-titulo">Detalle de gastos del periodo</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Descripcion</th>
+          <th>Categoria</th>
+          <th>Tipo</th>
+          <th class="der">Monto</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for gasto in gastos %}
+        <tr>
+          <td>{{ gasto.descripcion }}</td>
+          <td>{{ gasto.categoria | capitalize }}</td>
+          <td>
+            {% if gasto.tipo == 'ordinario' %}
+              <span class="badge-ordinario">Ordinario</span>
+            {% else %}
+              <span class="badge-extraordinario">Extraordinario</span>
+            {% endif %}
+          </td>
+          <td class="der">{{ gasto.monto | formato_monto }}</td>
+        </tr>
+        {% endfor %}
+        <tr class="subtotal">
+          <td colspan="3">Total gastos ordinarios</td>
+          <td class="der">{{ gasto_total_ordinario | formato_monto }}</td>
+        </tr>
+        {% if gasto_total_extraordinario > 0 %}
+        <tr class="subtotal">
+          <td colspan="3">Total gastos extraordinarios</td>
+          <td class="der">{{ gasto_total_extraordinario | formato_monto }}</td>
+        </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Liquidacion por unidad -->
+  <div class="seccion">
+    <div class="seccion-titulo">Liquidacion por unidad funcional</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Unidad</th>
+          <th>Propietario</th>
+          <th class="der">Indice</th>
+          <th class="der">Exp. Ord.</th>
+          {% if gasto_total_extraordinario > 0 %}
+          <th class="der">Exp. Ext.</th>
+          {% endif %}
+          <th class="der">Deuda Ord.</th>
+          {% if hay_deuda_extraordinaria %}
+          <th class="der">Deuda Ext.</th>
+          {% endif %}
+          <th class="der">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in detalles %}
+        <tr>
+          <td>{{ d.unidad_codigo }}</td>
+          <td>{{ d.propietario_nombre or "-" }}</td>
+          <td class="der">{{ d.indice }}%</td>
+          <td class="der">{{ d.monto_ordinario | formato_monto }}</td>
+          {% if gasto_total_extraordinario > 0 %}
+          <td class="der">{{ d.monto_extraordinario | formato_monto }}</td>
+          {% endif %}
+          <td class="der {% if d.deuda_ordinaria > 0 %}deuda{% endif %}">
+            {{ d.deuda_ordinaria | formato_monto }}
+          </td>
+          {% if hay_deuda_extraordinaria %}
+          <td class="der {% if d.deuda_extraordinaria > 0 %}deuda{% endif %}">
+            {{ d.deuda_extraordinaria | formato_monto }}
+          </td>
+          {% endif %}
+          <td class="der" style="font-weight: bold;">{{ d.total | formato_monto }}</td>
+        </tr>
+        {% endfor %}
+        <tr class="total-final">
+          <td colspan="3">TOTAL GENERAL</td>
+          <td class="der">{{ gasto_total_ordinario | formato_monto }}</td>
+          {% if gasto_total_extraordinario > 0 %}
+          <td class="der">{{ gasto_total_extraordinario | formato_monto }}</td>
+          {% endif %}
+          <td class="der">{{ total_deuda_ordinaria | formato_monto }}</td>
+          {% if hay_deuda_extraordinaria %}
+          <td class="der">{{ total_deuda_extraordinaria | formato_monto }}</td>
+          {% endif %}
+          <td class="der">{{ gran_total | formato_monto }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="pie">
+    Documento generado automaticamente por Consorcio App &bull; {{ fecha_generacion }}
+  </div>
+
+</body>
+</html>
