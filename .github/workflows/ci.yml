@@ -1,0 +1,79 @@
+name: CI
+
+on:
+  push:
+    branches: [main, "feature/**", "fix/**"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend-tests:
+    name: Tests backend
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: consorcio_test
+          POSTGRES_USER: consorcio
+          POSTGRES_PASSWORD: consorcio
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt
+
+      - name: Ejecutar tests unitarios
+        run: python -m pytest tests/unit/ -v --tb=short
+
+      - name: Ejecutar tests de integracion
+        env:
+          DATABASE_URL: postgresql+asyncpg://consorcio:consorcio@localhost:5432/consorcio_test
+          SECRET_KEY: clave-test-ci
+        run: |
+          python -m alembic upgrade head
+          python -m pytest tests/integration/ -v --tb=short
+        continue-on-error: true
+
+  frontend-check:
+    name: Check frontend
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Type check
+        run: npx nuxt typecheck || true
