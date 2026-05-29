@@ -177,7 +177,7 @@
 </template>
 
 <script setup lang="ts">
-definePageMeta({ middleware: "auth" })
+definePageMeta({ layout: "admin", middleware: "auth" })
 
 interface Periodo {
   id: string; mes: number; anio: number; estado: string; etiqueta: string; fecha_cierre: string | null
