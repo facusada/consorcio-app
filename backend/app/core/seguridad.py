@@ -1,21 +1,19 @@
 from datetime import datetime, timedelta, timezone
 
+import bcrypt
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 
 from app.core.config import configuracion
-
-contexto_pwd = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 ALGORITMO = "HS256"
 
 
 def hashear_contrasena(contrasena: str) -> str:
-    return contexto_pwd.hash(contrasena)
+    return bcrypt.hashpw(contrasena.encode(), bcrypt.gensalt()).decode()
 
 
 def verificar_contrasena(contrasena: str, hash: str) -> bool:
-    return contexto_pwd.verify(contrasena, hash)
+    return bcrypt.checkpw(contrasena.encode(), hash.encode())
 
 
 def crear_token_acceso(datos: dict) -> str:

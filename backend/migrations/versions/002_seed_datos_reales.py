@@ -8,16 +8,14 @@ Create Date: 2026-05-29
 from datetime import date
 from typing import Sequence, Union
 
+import bcrypt
 import sqlalchemy as sa
 from alembic import op
-from passlib.context import CryptContext
 
 revision: str = "002"
 down_revision: Union[str, None] = "001"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
-
-contexto_pwd = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 CONSORCIO_ID = "00000000-0000-0000-0000-000000000001"
 
@@ -126,7 +124,7 @@ def upgrade() -> None:
         {"id": ADMIN_PERSONA_ID, "email": ADMIN_EMAIL},
     )
 
-    password_hash = contexto_pwd.hash(ADMIN_PASSWORD)
+    password_hash = bcrypt.hashpw(ADMIN_PASSWORD.encode(), bcrypt.gensalt()).decode()
     conn.execute(
         sa.text("""
             INSERT INTO usuarios (id, persona_id, email, password_hash, rol)

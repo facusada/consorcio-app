@@ -43,6 +43,9 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Ejecutar tests unitarios
+        env:
+          DATABASE_URL: postgresql+asyncpg://consorcio:consorcio@localhost:5432/consorcio_test
+          SECRET_KEY: clave-test-ci
         run: python -m pytest tests/unit/ -v --tb=short
 
       - name: Ejecutar tests de integracion
@@ -52,7 +55,6 @@ jobs:
         run: |
           python -m alembic upgrade head
           python -m pytest tests/integration/ -v --tb=short
-        continue-on-error: true
 
   frontend-check:
     name: Check frontend
@@ -69,11 +71,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
 
       - name: Instalar dependencias
-        run: npm ci
+        run: npm install
 
       - name: Type check
         run: npx nuxt typecheck || true
