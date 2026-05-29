@@ -154,7 +154,9 @@ const creando = ref(false)
 const errorCrear = ref("")
 
 onMounted(async () => {
-  periodos.value = await api.get<Periodo[]>("/api/v1/periodos")
+  try {
+    periodos.value = await api.get<Periodo[]>("/api/v1/periodos")
+  } catch {}
   cargando.value = false
 })
 

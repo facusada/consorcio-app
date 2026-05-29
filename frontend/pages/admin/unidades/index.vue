@@ -131,7 +131,9 @@ const cargando = ref(true)
 const unidades = ref<Unidad[]>([])
 
 onMounted(async () => {
-  unidades.value = await api.get<Unidad[]>("/api/v1/unidades")
+  try {
+    unidades.value = await api.get<Unidad[]>("/api/v1/unidades")
+  } catch {}
   cargando.value = false
 })
 

@@ -57,7 +57,9 @@ const cargando = ref(true)
 const propietarios = ref<Propietario[]>([])
 
 onMounted(async () => {
-  propietarios.value = await api.get<Propietario[]>("/api/v1/propietarios")
+  try {
+    propietarios.value = await api.get<Propietario[]>("/api/v1/propietarios")
+  } catch {}
   cargando.value = false
 })
 
