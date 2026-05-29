@@ -16,6 +16,8 @@ export const useAuthStore = defineStore("auth", {
   getters: {
     autenticado: (state) => !!state.token,
     esAdmin: (state) => state.usuario?.rol === "admin",
+    esInvitado: (state) => state.usuario?.rol === "invitado",
+    puedeModificar: (state) => state.usuario?.rol === "admin",
   },
 
   actions: {
@@ -42,6 +44,21 @@ export const useAuthStore = defineStore("auth", {
         }
       )
       this.usuario = data
+    },
+
+    async entrarComoInvitado() {
+      const config = useRuntimeConfig()
+      const data = await $fetch<{ access_token: string }>(
+        `${config.public.apiBase}/api/v1/auth/invitado`,
+        { method: "POST" }
+      )
+      this.token = data.access_token
+      this.usuario = {
+        id: "invitado",
+        email: "invitado@consorcio.local",
+        rol: "invitado",
+        nombre_completo: "Invitado",
+      }
     },
 
     cerrarSesion() {

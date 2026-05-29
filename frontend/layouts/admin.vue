@@ -45,12 +45,19 @@
       <div class="p-4 mt-auto">
         <div class="mx-0 mb-3" style="height: 1px; background: var(--sidebar-border)" />
         <div class="flex items-center gap-3">
-          <div class="w-8 h-8 rounded-full bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-300 text-xs font-bold">
+          <div
+            class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
+            :class="auth.esInvitado
+              ? 'bg-amber-500/20 border border-amber-500/30 text-amber-300'
+              : 'bg-indigo-500/20 border border-indigo-500/30 text-indigo-300'"
+          >
             {{ iniciales }}
           </div>
           <div class="flex-1 min-w-0">
             <p class="text-sm font-medium text-white truncate leading-tight">{{ auth.usuario?.nombre_completo }}</p>
-            <p class="text-xs truncate" style="color: var(--sidebar-text)">Administrador</p>
+            <p class="text-xs truncate" style="color: var(--sidebar-text)">
+              {{ auth.esInvitado ? "Solo lectura" : "Administrador" }}
+            </p>
           </div>
           <button
             @click="auth.cerrarSesion()"
@@ -67,8 +74,20 @@
     </aside>
 
     <!-- Main -->
-    <main class="flex-1 overflow-y-auto">
-      <slot />
+    <main class="flex-1 overflow-y-auto flex flex-col">
+
+      <!-- Banner invitado -->
+      <div v-if="auth.esInvitado" class="flex items-center gap-2.5 px-5 py-2.5 text-xs font-medium shrink-0" style="background: #fef9c3; border-bottom: 1px solid #fde68a; color: #854d0e;">
+        <svg class="w-3.5 h-3.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+        </svg>
+        Modo invitado — solo lectura. Podés consultar expensas y liquidaciones pero no realizar cambios.
+        <NuxtLink to="/login" class="ml-auto underline hover:no-underline font-semibold">Iniciar sesion</NuxtLink>
+      </div>
+
+      <div class="flex-1">
+        <slot />
+      </div>
     </main>
   </div>
 </template>
