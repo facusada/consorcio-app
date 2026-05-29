@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Env
+.env
+!.env.example
+
+# Node
+node_modules/
+.nuxt/
+.output/
+.nitro/
+
+# Postgres data
+postgres_data/
+
+# OS
+.DS_Store
