@@ -1,5 +1,5 @@
 import uuid
-from datetime import date, datetime, timezone
+from datetime import date, datetime
 
 from sqlalchemy import CheckConstraint, Date, ForeignKey, Index, SmallInteger, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -27,10 +27,10 @@ class Periodo(Base):
     anio: Mapped[int] = mapped_column(SmallInteger, nullable=False)
     estado: Mapped[str] = mapped_column(String(20), nullable=False, default="abierto")
     fecha_cierre: Mapped[date | None] = mapped_column(Date, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(default=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
     )
 
     consorcio: Mapped["Consorcio"] = relationship(back_populates="periodos")

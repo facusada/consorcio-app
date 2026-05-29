@@ -1,5 +1,5 @@
 import uuid
-from datetime import date, datetime, timezone
+from datetime import date, datetime
 
 from sqlalchemy import CheckConstraint, Date, ForeignKey, Index, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -31,7 +31,7 @@ class UnidadPersona(Base):
     rol: Mapped[str] = mapped_column(String(20), nullable=False)
     fecha_desde: Mapped[date] = mapped_column(Date, nullable=False)
     fecha_hasta: Mapped[date | None] = mapped_column(Date, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(default=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
 
     unidad: Mapped["UnidadFuncional"] = relationship(back_populates="personas")
     persona: Mapped["Persona"] = relationship(back_populates="unidades")

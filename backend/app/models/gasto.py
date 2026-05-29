@@ -1,8 +1,8 @@
 import uuid
-from datetime import date, datetime, timezone
+from datetime import date, datetime
 from decimal import Decimal
 
-from sqlalchemy import CheckConstraint, Date, Decimal as SADecimal, ForeignKey, Index, String, Text
+from sqlalchemy import CheckConstraint, Date, ForeignKey, Index, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -22,15 +22,15 @@ class Gasto(Base):
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     periodo_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("periodos.id"), nullable=False)
     descripcion: Mapped[str] = mapped_column(String(300), nullable=False)
-    monto: Mapped[Decimal] = mapped_column(SADecimal(12, 2), nullable=False)
+    monto: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
     tipo: Mapped[str] = mapped_column(String(20), nullable=False)
     categoria: Mapped[str] = mapped_column(String(50), nullable=False)
     fecha: Mapped[date] = mapped_column(Date, nullable=False)
     comprobante_url: Mapped[str | None] = mapped_column(Text, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(default=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
     )
 
     periodo: Mapped["Periodo"] = relationship(back_populates="gastos")

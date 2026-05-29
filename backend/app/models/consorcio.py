@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime
 
 from sqlalchemy import String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -17,10 +17,10 @@ class Consorcio(Base):
     provincia: Mapped[str] = mapped_column(String(100), nullable=False, default="Buenos Aires")
     cuit: Mapped[str | None] = mapped_column(String(13), unique=True, nullable=True)
     reglamento_url: Mapped[str | None] = mapped_column(Text, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(default=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
     )
 
     unidades: Mapped[list["UnidadFuncional"]] = relationship(back_populates="consorcio")

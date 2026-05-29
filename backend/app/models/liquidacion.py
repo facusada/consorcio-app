@@ -1,8 +1,8 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import CheckConstraint, Decimal as SADecimal, ForeignKey, Index
+from sqlalchemy import CheckConstraint, ForeignKey, Index, Numeric
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -21,13 +21,13 @@ class Liquidacion(Base):
         ForeignKey("periodos.id"), unique=True, nullable=False
     )
     fecha_generacion: Mapped[datetime] = mapped_column(
-        default=lambda: datetime.now(timezone.utc)
+        default=datetime.utcnow
     )
-    gasto_total_ordinario: Mapped[Decimal] = mapped_column(SADecimal(12, 2), nullable=False)
+    gasto_total_ordinario: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
     gasto_total_extraordinario: Mapped[Decimal] = mapped_column(
-        SADecimal(12, 2), nullable=False, default=Decimal("0")
+        Numeric(12, 2), nullable=False, default=Decimal("0")
     )
-    created_at: Mapped[datetime] = mapped_column(default=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
 
     periodo: Mapped["Periodo"] = relationship(back_populates="liquidacion")
     detalles: Mapped[list["DetalleExpensa"]] = relationship(back_populates="liquidacion")

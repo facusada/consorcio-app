@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
@@ -32,7 +32,7 @@ async def login(
             detail="Email o contrasena incorrectos",
         )
 
-    usuario.last_login = datetime.now(timezone.utc)
+    usuario.last_login = datetime.utcnow()
     await sesion.commit()
 
     token = crear_token_acceso({

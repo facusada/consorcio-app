@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime
 
 from sqlalchemy import Boolean, CheckConstraint, ForeignKey, Index, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -24,10 +24,10 @@ class Usuario(Base):
     rol: Mapped[str] = mapped_column(String(20), nullable=False)
     activo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     last_login: Mapped[datetime | None] = mapped_column(nullable=True)
-    created_at: Mapped[datetime] = mapped_column(default=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
     )
 
     persona: Mapped["Persona"] = relationship(back_populates="usuario")

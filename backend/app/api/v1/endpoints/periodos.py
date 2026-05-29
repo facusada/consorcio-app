@@ -3,6 +3,7 @@ from datetime import date, datetime, timezone
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import Response
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -20,6 +21,7 @@ from app.schemas.gasto import GastoActualizar, GastoCrear, GastoRespuesta
 from app.schemas.liquidacion import DetalleExpensaRespuesta, LiquidacionRespuesta
 from app.schemas.periodo import CambioEstado, PeriodoCrear, PeriodoRespuesta
 from app.services.calculo_expensas import DatosUnidad, calcular_expensas
+from app.services.generador_pdf import generar_pdf_liquidacion
 
 router = APIRouter(prefix="/periodos", tags=["periodos"])
 
@@ -292,12 +294,19 @@ async def liquidar_periodo(
     resultados = calcular_expensas(total_ord, total_ext, datos_unidades)
 
     # Eliminar liquidacion existente si hay (re-liquidacion)
+    # Se usa DELETE directo para evitar problemas de ORM cascade con detalles huerfanos
     liq_existente = await sesion.execute(
         select(Liquidacion).where(Liquidacion.periodo_id == periodo_id)
     )
     liq_anterior = liq_existente.scalar_one_or_none()
     if liq_anterior:
-        await sesion.delete(liq_anterior)
+        from sqlalchemy import delete as sql_delete
+        await sesion.execute(
+            sql_delete(DetalleExpensa).where(DetalleExpensa.liquidacion_id == liq_anterior.id)
+        )
+        await sesion.execute(
+            sql_delete(Liquidacion).where(Liquidacion.id == liq_anterior.id)
+        )
         await sesion.flush()
 
     # Crear nueva liquidacion
@@ -429,3 +438,95 @@ async def obtener_liquidacion(
 
     mapa_unidades = {str(d.unidad_id): d.unidad for d in liquidacion.detalles}
     return _construir_respuesta_liquidacion(liquidacion, liquidacion.detalles, mapa_unidades)
+
+
+@router.get("/{periodo_id}/liquidacion/pdf")
+async def descargar_pdf_liquidacion(
+    periodo_id: uuid.UUID,
+    sesion: AsyncSession = Depends(obtener_sesion),
+    _: UsuarioActual = Depends(obtener_usuario_actual),
+) -> Response:
+    resultado = await sesion.execute(
+        select(Liquidacion)
+        .options(
+            selectinload(Liquidacion.detalles).selectinload(DetalleExpensa.unidad)
+            .selectinload(UnidadFuncional.personas).selectinload(UnidadPersona.persona),
+            selectinload(Liquidacion.periodo),
+        )
+        .where(Liquidacion.periodo_id == periodo_id)
+    )
+    liquidacion = resultado.scalar_one_or_none()
+    if not liquidacion:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No existe liquidacion para este periodo",
+        )
+
+    resultado_consorcio = await sesion.execute(
+        select(Liquidacion.periodo_id)
+    )
+    from app.models.consorcio import Consorcio
+    resultado_c = await sesion.execute(select(Consorcio).limit(1))
+    consorcio = resultado_c.scalar_one_or_none()
+
+    resultado_gastos = await sesion.execute(
+        select(Gasto).where(Gasto.periodo_id == periodo_id).order_by(Gasto.fecha)
+    )
+    gastos = resultado_gastos.scalars().all()
+
+    periodo = liquidacion.periodo
+    detalles = sorted(liquidacion.detalles, key=lambda d: d.unidad.tipo + d.unidad.numero)
+
+    detalles_ctx = []
+    for d in detalles:
+        unidad = d.unidad
+        propietario = next(
+            (up.persona for up in unidad.personas if up.rol == "propietario" and up.vigente),
+            None,
+        )
+        detalles_ctx.append({
+            "unidad_codigo": unidad.codigo,
+            "propietario_nombre": propietario.nombre_completo if propietario else None,
+            "indice": d.indice,
+            "monto_ordinario": d.monto_ordinario,
+            "monto_extraordinario": d.monto_extraordinario,
+            "deuda_ordinaria": d.deuda_ordinaria,
+            "deuda_extraordinaria": d.deuda_extraordinaria,
+            "total": d.total,
+        })
+
+    hay_deuda_extraordinaria = any(
+        float(d["deuda_extraordinaria"]) > 0 for d in detalles_ctx
+    )
+
+    from datetime import datetime as dt
+    contexto = {
+        "consorcio_nombre": consorcio.nombre if consorcio else "Consorcio",
+        "consorcio_direccion": consorcio.direccion if consorcio else "",
+        "periodo": periodo.etiqueta,
+        "fecha_generacion": dt.now().strftime("%d/%m/%Y %H:%M"),
+        "gastos": [
+            {
+                "descripcion": g.descripcion,
+                "categoria": g.categoria,
+                "tipo": g.tipo,
+                "monto": g.monto,
+            }
+            for g in gastos
+        ],
+        "gasto_total_ordinario": liquidacion.gasto_total_ordinario,
+        "gasto_total_extraordinario": liquidacion.gasto_total_extraordinario,
+        "detalles": detalles_ctx,
+        "hay_deuda_extraordinaria": hay_deuda_extraordinaria,
+        "total_deuda_ordinaria": sum(float(d["deuda_ordinaria"]) for d in detalles_ctx),
+        "total_deuda_extraordinaria": sum(float(d["deuda_extraordinaria"]) for d in detalles_ctx),
+        "gran_total": sum(float(d["total"]) for d in detalles_ctx),
+    }
+
+    pdf_bytes = generar_pdf_liquidacion(contexto)
+    nombre_archivo = f"liquidacion-{periodo.anio}-{periodo.mes:02d}.pdf"
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{nombre_archivo}"'},
+    )

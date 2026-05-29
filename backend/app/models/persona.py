@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime
 
 from sqlalchemy import CheckConstraint, Index, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -21,10 +21,10 @@ class Persona(Base):
     email: Mapped[str | None] = mapped_column(String(255), nullable=True)
     telefono: Mapped[str | None] = mapped_column(String(20), nullable=True)
     tipo: Mapped[str] = mapped_column(String(20), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(default=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
     )
 
     unidades: Mapped[list["UnidadPersona"]] = relationship(back_populates="persona")
